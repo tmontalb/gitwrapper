@@ -121,7 +121,6 @@ gitwrap/
 ├── git_ops.py              # Git command execution and safety logic
 ├── confirmation.py         # User confirmation handling
 ├── output.py               # YAML output formatting
-├── utils.py                # Shared helpers
 ├── requirements.txt
 └── tests/
     └── test_git_ops.py
