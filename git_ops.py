@@ -32,18 +32,71 @@ class GitOps:
     def status(self):
         return self.run(["git", "status"])
 
+    def clean_preview(self):
+        """
+        Returns the list of files that git clean would remove.
+        Uses git clean dry-run mode (-n).
+        """
+
+        proc = subprocess.run(
+            ["git", "clean", "-fdn"],
+            capture_output=True,
+            text=True
+        )
+
+        if proc.returncode != 0:
+            return {
+                "success": False,
+                "stderr": proc.stderr
+            }
+
+        files = []
+
+        for line in proc.stdout.splitlines():
+            if line.startswith("Would remove "):
+                files.append(
+                    line.replace("Would remove ", "")
+                )
+
+        return {
+            "success": True,
+            "files": files
+        }
+
     def clean(self, force=False):
 
+        # First determine what would be deleted
+        preview = self.clean_preview()
+
+        if not preview["success"]:
+            return preview
+
+        files = preview["files"]
+
+        # Nothing to clean
+        if not files:
+            return {
+                "success": True,
+                "message": "No untracked files to remove"
+            }
+
+        # Show impact before destructive operation
         if not force:
 
+            print("The following files will be deleted:")
+
+            for file in files:
+                print(f"  {file}")
+
             confirmed = ask_confirmation(
-                "This will permanently delete ALL untracked files. Continue?"
+                "Continue?"
             )
 
             if not confirmed:
                 return {
                     "success": False,
-                    "cancelled": True
+                    "cancelled": True,
+                    "files": files
                 }
 
         return self.run(["git", "clean", "-fd"])
