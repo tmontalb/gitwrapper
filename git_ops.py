@@ -14,7 +14,9 @@ class GitOps:
             return {
                 "success": True,
                 "dry_run": True,
-                "command": " ".join(command)
+                "command": " ".join(command),
+                "stdout": "",
+                "stderr": ""
             }
 
         proc = subprocess.run(
