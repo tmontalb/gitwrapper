@@ -29,8 +29,44 @@ class GitOps:
             "stderr": proc.stderr
         }
 
+    def parse_porcelain(self, output):
+        result = {
+            "modified": [],
+            "staged": [],
+            "untracked": []
+        }
+
+        for line in output.splitlines():
+            if not line:
+                continue
+
+            if line.startswith("? "):
+                result["untracked"].append(line[2:])
+                continue
+
+            if line.startswith("1 "):
+                parts = line.split()
+                xy = parts[1]
+                filename = parts[-1]
+
+                if xy[0] != ".":
+                    result["staged"].append(filename)
+
+                if xy[1] != ".":
+                    result["modified"].append(filename)
+
+        return result
+
     def status(self):
-        return self.run(["git", "status"])
+
+        result = self.run(
+            ["git", "status", "--porcelain=v2"]
+        )
+
+        if result["success"]:
+            result["stdout"] = self.parse_porcelain(result["stdout"])
+
+        return result
 
     def clean_preview(self):
         """
